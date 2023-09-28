@@ -113,7 +113,7 @@ def run_query():
 
         for record in data['records']:
             rowDetail = []
-            for field, value in record.items(): #field is Key of map, value is the Value related to that key. Map is like this --> ('Id', '0039E00001nRel4QAC')
+            for field, value in record.items(): #field is Key of map, value is the Value related to that key. Map is like this --> ('Name', 'TestName')
                 if(field == "attributes"):
                     #rowDetail.append('test')
                     continue

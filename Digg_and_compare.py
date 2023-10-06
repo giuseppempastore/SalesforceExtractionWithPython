@@ -59,7 +59,7 @@ orgDomain.grid(row=3, column=1, sticky=tk.W) #Sticky specifies a value of S = So
 
 #outputFilePath.grid(row=8, column=1)
 
-csvFromQueryPath = tk.StringVar() #StringVar() is used to store String variables outside methods
+#csvFromQueryPath = tk.StringVar() #StringVar() is used to store String variables outside methods
 
 
 #this section is just to put predefined values to test the functionality
@@ -105,6 +105,11 @@ queryBox.grid(row=5, column=1, sticky=tk.W)
 
 #Run query buttons
 def run_query():
+    print("csvFromQueryPath ****> " + csvFromQueryPath.get())
+    if(csvFromQueryPath.get() == ''):
+        print("inside if error query path ")
+        tk.messagebox.showerror(title="No selected path", message="Please select path to save query result")
+        return
     print("queryBox ****> " % queryBox)
     print("queryBox.get ****> " + queryBox.get('1.0', tk.END) )
     query = queryBox.get('1.0', tk.END) #Here 1.0 means start getting text from first character of the first line and end-1c means select text till the end and -1c means removing 1 character from the end as a newline \n character is added at the end of the text
@@ -141,6 +146,7 @@ def run_query():
             csv_data.append(','.join(rowDetail))
         with open(csvFromQueryPath.get(), 'w') as file: # w = write, wb = write binary mode , b = binary
             file.write('\n'.join(csv_data))
+        tk.messagebox.showinfo(title="Success", message="Query successfully completed")
   #  except SalesforceMalformedRequest as e:
   #      print("Invalid Query")
   #      tk.messagebox.showerror(title="Malformed Query", message={e})
@@ -154,18 +160,33 @@ queryButton = tk.Button(master,
 
 queryButton.grid(row=5, column=0, sticky=tk.W, pady=4,padx=(10, 0))
 
-#File path where to save the file section
+#method to open file browser and select file already existing
+def loadCsv():
+    filePath = filedialog.askopenfilename(initialdir = "/",
+                                          title = "Select a Csv File",
+                                          filetypes = (("Csv files",
+                                                        "*.csv*"),
+                                                       ("all files",
+                                                        "*.*")))
+    return filePath
+
+#method to open file browser and create new file
+def createCsv():
+    filePath = filedialog.asksaveasfilename(confirmoverwrite=True,
+                                            filetypes=[("csv file", ".csv")],
+                                            defaultextension=".csv")
+    return filePath
 
 # Create a File Explorer Entry
-file_explorer_placeholder = tk.Entry(master,width=100 )
+csvFromQueryPath = tk.Entry(master,width=100 )
+csvFromQueryPath.grid(row = 8, column = 1, sticky=tk.W)
 
 # file explorer window
 def browseFolders():
-    csvFromQueryPath.set('')
-    folder_selected = filedialog.askdirectory()
-    if(folder_selected != ""):
-        csvFromQueryPath.set(folder_selected+'/outputTestQuery.csv')
-        file_explorer_placeholder.insert(0,folder_selected)
+    csvFromQueryPath.delete(0, tk.END)
+    print("csvFromQueryPath after RESET ****** " + csvFromQueryPath.get())
+    filePath = createCsv() 
+    csvFromQueryPath.insert(0,filePath)
 
 
 #tk.Label(master, text="Output File Path").grid(row=8,pady=(10, 0))
@@ -176,8 +197,6 @@ button_explore = tk.Button(master,
 
 button_explore.grid(row=8, column=0, sticky=tk.W, padx=(10, 0),pady=(10, 0))
 
-file_explorer_placeholder.grid(row = 8, column = 1, sticky=tk.W)
-
 
 #Load file CSV section
 csvFromExternalPath = tk.Entry(master,width=100 )
@@ -185,17 +204,6 @@ csvFromExternalPath.grid(row = 11, column = 1, sticky=tk.W)
 
 #tk.Label(master, text="File to Upload").grid(row=11,pady=(10, 0))
 
-
-
-
-def loadCsv():
-    filePath = filedialog.askopenfilename(initialdir = "/",
-                                          title = "Select a Csv File",
-                                          filetypes = (("Csv files",
-                                                        "*.csv*"),
-                                                       ("all files",
-                                                        "*.*")))
-    return filePath
 
 def updateExternalPath():
     csvFromExternalPath.delete(0, tk.END)
@@ -212,12 +220,9 @@ def updateLocalFilePath():
 def chooseFileDirectory():
     fileDirectoryPath.delete(0, tk.END)
     print("fileDirectoryPath after RESET ****** " + fileDirectoryPath.get())
-    filePath = filedialog.askdirectory()
+    filePath = createCsv()
     if(filePath != ""):
-        filePath = filePath + '/compare_files.csv'
         fileDirectoryPath.insert(0,filePath)
-        compareFiles()
-        tk.messagebox.showinfo(title="SUCCESS", message="Compare completed successfully")
 
 loadFileButton = tk.Button(master,
                         text = "Upload External Csv",
@@ -241,7 +246,7 @@ fileDirectoryPath = tk.Entry(master,width=100 )
 fileDirectoryPath.grid(row = 16, column = 1, sticky=tk.W)
 
 chooseFileDirectoryButton = tk.Button(master,
-                            text = "Compare CSV",
+                            text = "Select folder to save Compare result",
                             command = chooseFileDirectory)
 
 chooseFileDirectoryButton.grid(row=16, column=0, pady=(20, 0))
@@ -257,6 +262,10 @@ def compareFiles():
     print(csvFromLocalUser.get())
     
     queryPath = ''
+
+    if(fileDirectoryPath.get() == ''):
+        tk.messagebox.showerror(title="No selected path", message="Please select path to save compare result")
+        return
 
     if(csvFromQueryPath.get() != ""):
         queryPath = csvFromQueryPath.get()
@@ -293,7 +302,8 @@ def compareFiles():
                 #    print(line)
                 #    outFile.write(line+("\n")) #we have to write the first row because it's the header, even if there are no differencies
                 if line not in csvQuery:
-                    outFile.write(line+("\n"))
+                    #outFile.write(line+("\n"))
+                    outFile.write(line)
                 count=count+1
 
             outFile.write(("\n\n ****** CHECK FROM FILE2 to FILE1 ******* \n\n"))
@@ -302,7 +312,10 @@ def compareFiles():
                #print("line csvQuery ****> ")
                #print(line)
                 if line not in extCsv:
-                    outFile.write(line+("\n"))
+                    #outFile.write(line+("\n"))
+                    outFile.write(line)
+                    
+        tk.messagebox.showinfo(title="Success", message="Compare operation successfully completed")
 
     except Exception as ex :
         tk.messagebox.showerror(title="Compare file error", message={ex})
@@ -312,6 +325,13 @@ def compareFiles():
 #                        command = compareFiles)
 #
 #compareFilesButton.grid(row=17, column=1, pady=(20, 0))
+
+#Compare files button
+compareFilesButton = tk.Button(master,
+                        text = "Compare Files",
+                        command = compareFiles)
+
+compareFilesButton.grid(row=17, column=1)
 
 
 master.mainloop()
